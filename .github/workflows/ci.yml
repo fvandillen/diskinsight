@@ -1,0 +1,28 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and package
+        run: ./Scripts/package_release.sh 1.0.0
+      - name: Smoke test
+        run: |
+          swift build -c release
+          ./Scripts/smoke_test.sh "$(swift build -c release --show-bin-path)/DiskInsight"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DiskInsight-arm64
+          path: |
+            build/DiskInsight-*-arm64.zip
+            build/DiskInsight-*-arm64.zip.sha256

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>DiskInsight</string>
+    <key>CFBundleDisplayName</key>
+    <string>DiskInsight</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.diskinsight.DiskInsight</string>
+    <key>CFBundleExecutable</key>
+    <string>DiskInsight</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticTermination</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Florian van Dillen. MIT License.</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>DiskInsight measures how much space the files on your Desktop use.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>DiskInsight measures how much space the files in your Documents folder use.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>DiskInsight measures how much space the files in your Downloads folder use.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>DiskInsight measures how much space is used on connected volumes.</string>
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>DiskInsight measures how much space is used on network volumes you select.</string>
+    <key>NSFileProviderDomainUsageDescription</key>
+    <string>DiskInsight reports the size of cloud-synced files.</string>
+</dict>
+</plist>
