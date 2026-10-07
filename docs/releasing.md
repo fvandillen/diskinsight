@@ -7,6 +7,10 @@ The application repository and tap are both public and MIT licensed.
 
 ## Publish a release
 
+Increment both version fields in `Resources/Info.plist` with every update to
+`main` (a patch bump by default). Local builds and CI read this version; use the
+same version when publishing a release.
+
 Run the **Release** workflow from GitHub Actions on the intended branch or commit:
 
 ```bash

@@ -12,13 +12,13 @@ if [[ $# -gt 1 || ( $# -eq 1 && "$1" != "--install" ) ]]; then
   exit 1
 fi
 
-VERSION="${DISKINSIGHT_VERSION:-1.0.0}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VERSION="${DISKINSIGHT_VERSION:-$(plutil -extract CFBundleShortVersionString raw -o - "$ROOT/Resources/Info.plist")}"
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "error: DISKINSIGHT_VERSION must be a version such as 1.0.0" >&2
   exit 1
 fi
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 APP_NAME="DiskInsight"

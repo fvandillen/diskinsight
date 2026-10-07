@@ -15,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and package
-        run: ./Scripts/package_release.sh 1.0.0
+        run: |
+          VERSION="$(plutil -extract CFBundleShortVersionString raw -o - Resources/Info.plist)"
+          ./Scripts/package_release.sh "$VERSION"
       - name: Smoke test
         run: |
           swift test
