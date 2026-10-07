@@ -32,6 +32,10 @@ Scanner access tests use disposable synthetic files. They cover expected
 system-access denials, unexpected failures, inline unreadable flags, and bounded diagnostic
 samples. Permission-denial fixtures are skipped when tests run as root.
 
+Scanner progress tests compare logical and allocated totals with completed
+results, including multi-terabyte sparse files, links, and collapsed packages.
+Sparse fixtures consume only a few allocated blocks, not their logical size.
+
 ## Source layout
 
 | Directory | Responsibility |

@@ -111,7 +111,7 @@ struct ContentView: View {
                 .scaleEffect(0.7)
                 .frame(width: 16, height: 16)
             VStack(alignment: .leading, spacing: 1) {
-                Text("\(Format.count(model.progress.files)) files · \(Format.count(model.progress.folders)) folders · \(Format.bytes(model.progress.bytes))")
+                Text("\(Format.count(model.progress.files)) files · \(Format.count(model.progress.folders)) folders · \(Format.bytes(model.progress.value(model.sizeMode)))")
                     .font(.system(size: 11, weight: .medium))
                     .monospacedDigit()
                 Text(model.progress.currentPath)

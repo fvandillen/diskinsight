@@ -105,7 +105,9 @@ Example startup-volume scan on Apple Silicon; results vary by machine:
 ### Size on disk vs logical size
 
 **Size on disk** measures allocated blocks (0 for cloud-evicted files);
-**Logical size** measures file length. Neither guarantees reclaimable space:
+**Logical size** measures file length. Scan progress uses the selected size mode;
+`--verbose` reports size on disk. Sparse files and cloud placeholders can have
+logical sizes larger than the disk's capacity. Neither guarantees reclaimable space:
 hard links, APFS clones, and snapshots can share or retain data. Space is not
 freed by moving files to Trash until you empty it.
 

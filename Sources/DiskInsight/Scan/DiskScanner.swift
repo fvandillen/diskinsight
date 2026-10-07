@@ -31,7 +31,8 @@ final class DiskScanner: @unchecked Sendable {
 
     private var files: Int64 = 0
     private var folders: Int64 = 0
-    private var bytes: Int64 = 0
+    private var size: Int64 = 0
+    private var allocated: Int64 = 0
     private var errors: Int64 = 0
     private var blocked: Int64 = 0
     private var systemProtected: Int64 = 0
@@ -75,7 +76,7 @@ final class DiskScanner: @unchecked Sendable {
 
         cond.lock()
         defer { cond.unlock() }
-        return ScanProgress(files: files, folders: folders, bytes: bytes,
+        return ScanProgress(files: files, folders: folders, size: size, allocated: allocated,
                             errors: errors, blocked: blocked,
                             systemProtected: systemProtected,
                             currentPath: active.isEmpty ? currentPath : active,
@@ -174,7 +175,8 @@ final class DiskScanner: @unchecked Sendable {
             cond.lock()
             files += harvest.files
             folders += harvest.folders
-            bytes += harvest.bytes
+            size += harvest.size
+            allocated += harvest.allocated
             errors += harvest.errors
             blocked += harvest.blocked
             systemProtected += harvest.systemProtected
@@ -212,7 +214,8 @@ final class DiskScanner: @unchecked Sendable {
     private struct Harvest {
         var files: Int64 = 0
         var folders: Int64 = 0
-        var bytes: Int64 = 0
+        var size: Int64 = 0
+        var allocated: Int64 = 0
         var errors: Int64 = 0
         var blocked: Int64 = 0
         var systemProtected: Int64 = 0
@@ -313,6 +316,8 @@ final class DiskScanner: @unchecked Sendable {
                     child.children = []
                     child.size = Int64(st.st_size)
                     child.allocated = Int64(st.st_blocks) * 512
+                    harvest.size += child.size
+                    harvest.allocated += child.allocated
                     continue
                 }
                 harvest.candidates.append(Candidate(node: child,
@@ -326,7 +331,8 @@ final class DiskScanner: @unchecked Sendable {
                 child.size = Int64(st.st_size)
                 child.allocated = Int64(st.st_blocks) * 512
                 harvest.files += 1
-                harvest.bytes += child.size
+                harvest.size += child.size
+                harvest.allocated += child.allocated
             }
         }
 
