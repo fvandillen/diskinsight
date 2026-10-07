@@ -34,12 +34,17 @@ struct ScanOptions {
 struct ScanProgress: Equatable {
     var files: Int64 = 0
     var folders: Int64 = 0
-    var bytes: Int64 = 0
+    var size: Int64 = 0
+    var allocated: Int64 = 0
     var errors: Int64 = 0
     var blocked: Int64 = 0
     var systemProtected: Int64 = 0
     var currentPath: String = ""
     var finished: Bool = false
+
+    func value(_ mode: SizeMode) -> Int64 {
+        mode == .logical ? size : allocated
+    }
 }
 
 /// Aggregated per-extension statistics, mirroring WinDirStat's extension list.

@@ -83,7 +83,7 @@ enum HeadlessScan {
             if done { break }
             if verbose {
                 let progress = scanner.snapshot()
-                FileHandle.standardError.write(Data("  \(progress.files) files, \(progress.folders) folders, \(Format.bytes(progress.bytes)) — \(progress.currentPath)\n".utf8))
+                FileHandle.standardError.write(Data("  \(progress.files) files, \(progress.folders) folders, \(Format.bytes(progress.value(.allocated))) on disk — \(progress.currentPath)\n".utf8))
             }
         }
 
