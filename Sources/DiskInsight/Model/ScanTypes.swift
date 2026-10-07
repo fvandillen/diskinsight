@@ -37,6 +37,7 @@ struct ScanProgress: Equatable {
     var bytes: Int64 = 0
     var errors: Int64 = 0
     var blocked: Int64 = 0
+    var systemProtected: Int64 = 0
     var currentPath: String = ""
     var finished: Bool = false
 }
@@ -60,6 +61,14 @@ struct ExtensionStat: Identifiable, Equatable {
     }
 }
 
+struct ScanIssue: Identifiable {
+    var id: String { path }
+    let path: String
+    let errorCode: Int32
+
+    var message: String { String(cString: strerror(errorCode)) }
+}
+
 struct ScanResult {
     var root: FileNode
     var extensions: [ExtensionStat]
@@ -69,8 +78,31 @@ struct ScanResult {
     var errors: Int64
     /// Folders left unread because Full Disk Access is missing.
     var blocked: Int64
+    /// Expected omissions that Full Disk Access cannot resolve.
+    var systemProtected: Int64
+    /// A bounded sample of unexpected failures, retaining their actual cause.
+    var unreadableSamples: [ScanIssue]
     var volumeCapacity: Int64
     var volumeFree: Int64
+}
+
+enum ScanWarning {
+    static func message(errors: Int64, blocked: Int64, hasFullDiskAccess: Bool) -> String? {
+        guard errors > 0 || blocked > 0 else { return nil }
+        var parts: [String] = []
+        if blocked > 0 {
+            parts.append("\(Format.count(blocked)) protected \(blocked == 1 ? "folder was" : "folders were") skipped.")
+        }
+        if errors > 0 {
+            parts.append("\(Format.count(errors)) \(errors == 1 ? "item" : "items") couldn't be read.")
+        }
+        if hasFullDiskAccess {
+            parts.append("Totals are incomplete. Full Disk Access is enabled; other permissions or filesystem errors may prevent access.")
+        } else {
+            parts.append("Totals are incomplete. Full Disk Access may allow more items to be read.")
+        }
+        return parts.joined(separator: " ")
+    }
 }
 
 enum SortKey: String, CaseIterable, Identifiable {

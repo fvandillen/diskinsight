@@ -134,18 +134,25 @@ private struct OutlineRowView: View {
                 Text(displayName)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                    .foregroundStyle(node.isUnreadable || node.isSkipped || node.needsPermission
+                    .foregroundStyle(node.isUnreadable || node.isSkipped || node.needsPermission || node.isSystemProtected
                                      ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.primary))
                 if node.needsPermission {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 8))
                         .foregroundStyle(.orange)
                         .help(Permissions.guardDescription(for: node.path))
+                } else if node.isSystemProtected {
+                    Image(systemName: "lock.shield")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.secondary)
+                        .help("Omitted from totals: protected by macOS independently of Full Disk Access")
                 } else if node.isUnreadable {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 8))
                         .foregroundStyle(.orange)
-                        .help("Not readable — Full Disk Access may be required")
+                        .help(model.hasFullDiskAccess
+                              ? "Not readable — Full Disk Access is enabled; check other permissions or filesystem errors"
+                              : "Not readable — Full Disk Access may help, but other permissions can also prevent access")
                 } else if node.isSkipped {
                     Image(systemName: "arrow.turn.down.right")
                         .font(.system(size: 8))

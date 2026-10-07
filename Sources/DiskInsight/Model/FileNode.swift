@@ -35,6 +35,8 @@ final class FileNode: Identifiable {
     var isSymlink: Bool = false
     var isUnreadable: Bool = false
     var isSkipped: Bool = false
+    /// Omitted because macOS protects it independently of Full Disk Access.
+    var isSystemProtected: Bool = false
     /// Not opened because it is TCC-guarded and we lack Full Disk Access.
     var needsPermission: Bool = false
     /// Index into `ScanResult.extensions`; -1 for directories and unclassified nodes.

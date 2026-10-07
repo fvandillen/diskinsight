@@ -1,38 +1,28 @@
 # DiskInsight
 
-A native macOS disk usage analyser inspired by **WinDirStat**. See where your
-space goes with a linked directory tree, file-type breakdown, and cushion
-treemap, then move unwanted files to Trash. Built with SwiftUI and AppKit.
+A native macOS disk usage analyser inspired by **WinDirStat**. Explore your disk
+with a linked directory tree, file-type breakdown, and cushion treemap, then
+move unwanted files to Trash. Built with SwiftUI and AppKit.
 
 **macOS 14+ · Apple Silicon · No third-party dependencies · [MIT licensed](LICENSE)**
 
-## Install with Homebrew
+## Install
 
 ```bash
 brew install --cask fvandillen/tap/diskinsight
 open -a DiskInsight
 ```
 
-This uses the public [DiskInsight Homebrew tap](https://github.com/fvandillen/homebrew-tap).
-If you prefer to add the tap explicitly:
-
-```bash
-brew tap fvandillen/tap
-brew install --cask diskinsight
-```
-
-Alternatively, download the ZIP from
+Or download the ZIP from
 [GitHub Releases](https://github.com/fvandillen/diskinsight/releases/latest),
-unzip it, and drag **DiskInsight.app** into **Applications**. Intel Macs are not
-currently supported by the distributed app.
+unzip it, and drag **DiskInsight.app** into **Applications**. Releases support
+Apple Silicon only.
 
-**First launch:** releases are ad-hoc signed, not Apple-notarized. If macOS
-blocks the app, attempt to open it, then use **System Settings → Privacy &
-Security → Open Anyway** and confirm. On older macOS versions, right-clicking
-the app and choosing **Open** may also work. Only approve a download you trust;
-you do not need to disable Gatekeeper.
+**First launch:** releases are ad-hoc signed, not notarized. If macOS blocks the
+app, attempt to open it, then select **System Settings → Privacy & Security →
+Open Anyway**. Only approve a download you trust; do not disable Gatekeeper.
 
-To upgrade or remove the app:
+Upgrade or uninstall:
 
 ```bash
 brew upgrade --cask diskinsight
@@ -43,38 +33,43 @@ brew uninstall --cask diskinsight
 
 ![Three linked views: directory tree, file-type list, and cushion treemap](docs/screenshot.png)
 
-*A real app capture scanning synthetic demo files; no private file listings.*
-
 ![The up-front Full Disk Access request](docs/permissions.png)
 
 ## Quick start
 
-1. Launch DiskInsight and grant **Full Disk Access** for a complete scan, or
-   choose **Continue with limited access**.
-2. Click **Scan** to choose a folder, or use its menu for a common location.
-3. Sort the tree by size or select a file type to highlight its treemap blocks.
-4. Select a file to reveal it in Finder, or press **⌘⌫** to move it to Trash
-   after confirmation. Review the selection before deleting.
+1. Grant **Full Disk Access**, or choose **Continue with limited access**.
+2. Click **Scan** to choose a folder or volume.
+3. Select a tree row, file type, or treemap block to explore its disk usage.
+4. Reveal files in Finder, or press **⌘⌫** to move a selection to Trash after
+   confirmation.
 
-Scanning reads filesystem metadata locally. It does not upload your file list.
-Protected or unreadable folders can make totals incomplete; DiskInsight marks
-those omissions rather than treating them as empty.
+Scanning stays local; no file listings are uploaded.
 
-## What it does
+## Features
 
-* **Directory tree** — every folder and file with size on disk, percentage of its
-  parent, item/file/folder counts and modification date. Sortable by any column.
-* **File-type list** — space used per extension, colour-coded and ranked.
-  Selecting a type highlights every matching block in the treemap.
-* **Cushion treemap** — the WinDirStat visualisation: one rectangle per file,
-  area proportional to size, colour by file type, Van Wijk cushion shading to
-  reveal folder structure. Click a block to select it in the tree, double-click
-  to zoom into it.
-* **Delete** — move anything to the Trash (⌘⌫) with confirmation. The tree,
-  totals, file-type list and treemap all update instantly, without rescanning.
-* **Reveal / Open / Copy Path** from the toolbar or context menu.
+* **Sortable directory tree** with sizes, percentages, item counts, and dates.
+* **Ranked file types** with colour-coded treemap highlighting.
+* **Cushion treemap** sized by file usage; double-click to zoom in.
+* **Move to Trash** with confirmation and immediate updates to all views.
+* **Reveal, open, and copy paths** from the toolbar or context menu.
 
-The three views are linked: selecting in one highlights in the others.
+Selections are linked across all three views.
+
+## Permissions
+
+DiskInsight requests **Full Disk Access** on first launch to include protected
+user data without repeated folder prompts. With **Continue with limited access**,
+guarded folders are skipped, shown as locked, and excluded from totals.
+
+Full Disk Access does not override every macOS protection or file permission.
+Data Vaults and known system-managed access denials do not trigger warnings;
+a neutral **macOS-protected** count records these omissions. Their contents
+remain excluded from totals. DiskInsight does not elevate privileges.
+
+Other unreadable items still trigger a warning. **Details…** shows up to 100
+affected paths and filesystem errors, also available with `--list-unreadable`.
+If Full Disk Access is already enabled, the warning does not ask for it again.
+An unreadable scan root fails explicitly rather than showing an empty scan.
 
 ## Build and install
 
@@ -83,56 +78,15 @@ The three views are linked: selecting in one highlights in the others.
 ./Scripts/build_app.sh --install   # also copies to /Applications
 ```
 
-Requirements: macOS 14+, Apple Silicon, Xcode command line tools
-(`xcode-select --install`). The script builds a release
-`arm64` binary, wraps it in a bundle with a generated icon, and ad-hoc signs it.
+Requires macOS 14+, Apple Silicon, and Xcode command line tools
+(`xcode-select --install`). The script builds and ad-hoc signs an `arm64` app.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development and smoke tests, and
-[the release guide](docs/releasing.md) for release packaging and Homebrew updates.
-
-## Permissions, asked once
-
-macOS guards Desktop, Documents, Downloads, iCloud Drive and other locations, and
-raises a separate consent dialog the first time an app touches each one. A disk
-analyser walks all of them, so the naive result is a barrage of popups mid-scan.
-
-DiskInsight asks once instead. On first launch it shows a single screen requesting
-**Full Disk Access**, opens System Settings on the right page, and polls in the
-background so it continues by itself the moment you grant it — no second trip.
-
-If you decline and pick *Continue with limited access*, DiskInsight does **not**
-fall back to prompting. The scanner refuses to open guarded folders at all: they
-appear greyed out with a lock and a banner explains the totals are incomplete.
-This is designed to avoid repeated permission prompts. macOS permission behavior
-can vary by OS version and location.
-
-The guarded list was derived by watching `tccd`. In development testing, scanning
-an entire home folder without Full Disk Access produced one TCC query —
-`kTCCServiceSystemPolicyAllFiles`, which is DiskInsight checking its own access, and
-is silent by design:
-
-```
-$ log stream --predicate 'process == "tccd"' &
-$ DiskInsight --scan ~
-  1612878 files, 308877 folders, 36 unreadable, 28 blocked, 10.0 s
-
-kTCCServiceSystemPolicyAllFiles   1     # the access check itself
-                                        # zero folder prompts
-```
-
-Only folders macOS actually guards are skipped. `~/Pictures`, `~/Movies` and
-`~/Music` are deliberately *not* on the list — `tccd` shows they are not
-folder-guarded, and on most Macs they hold a large share of the data you came to
-find. Their media *library bundles* are skipped, since those are guarded.
-
-Homebrew also installs a `diskinsight` command. Run `diskinsight --probe-paths`
-to see which locations deny access on your machine. This diagnostic directly
-opens the listed locations and may trigger macOS permission prompts.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development and tests, and
+[the release guide](docs/releasing.md) for packaging and Homebrew updates.
 
 ## Performance
 
-Development measurements on an Apple Silicon Mac, scanning the whole startup
-volume (results depend on your hardware, filesystem, and permissions):
+Example startup-volume scan on Apple Silicon; results vary by machine:
 
 | Metric | Value |
 | --- | --- |
@@ -141,41 +95,24 @@ volume (results depend on your hardware, filesystem, and permissions):
 | Wall clock | ~21 s (cold), ~1 s for a small tree warm |
 | Peak memory | ~620 MB |
 
-Totals were verified against `du -sk` and `find` on a 158k-file tree: identical
-file and folder counts, and sizes within 0.2% (`du` de-duplicates hard links,
-DiskInsight counts each link, matching WinDirStat's behaviour).
-
 ## How the scan works
 
-* Directories are drained from a shared work queue by one thread per core, using
-  `opendir` + `fstatat` — a single hot subtree still parallelises.
-* **Firmlinks** (`/Users` → the Data volume) are followed, but every directory is
-  de-duplicated by `(device, inode)` so nothing is counted twice.
-* **Hidden helper volumes** (`/System/Volumes/Data`, `VM`, `Preboot`, `Update`,
-  and the mounted system snapshot) are skipped — they either duplicate content
-  that is already visible or contain nothing actionable.
-* **Network, autofs and other remote mounts** are skipped by consulting a
-  `getfsstat` snapshot taken once per scan, so the hot loop never issues a
-  `statfs` that could block on a stalled mount.
-* **Cloud placeholders** (`SF_DATALESS`, e.g. evicted iCloud Drive folders) are
-  never opened, so scanning cannot trigger a multi-gigabyte download. Evicted
-  files correctly report 0 bytes on disk.
-* Symbolic links are never followed.
-
-Skipping these cost 88 minutes on the first prototype; the current scanner does
-the same volume in 21 seconds.
+* Parallel filesystem traversal using `opendir` and `fstatat`.
+* Firmlinks are followed; directories are de-duplicated by device and inode.
+* Hidden helper volumes, network mounts, and autofs are skipped.
+* Cloud placeholders are not opened, avoiding downloads.
+* Symbolic links are not followed; hard links are counted separately.
 
 ### Size on disk vs logical size
 
-Toggle in the action bar. *Size on disk* uses `st_blocks × 512` (allocated blocks,
-and 0 for cloud-evicted files). *Logical size* uses `st_size`. Allocated size is
-not a guarantee of reclaimable space: hard links, APFS clones, and snapshots can
-share or retain data. Moving files to Trash does not free their space until you
-empty Trash.
+**Size on disk** measures allocated blocks (0 for cloud-evicted files);
+**Logical size** measures file length. Neither guarantees reclaimable space:
+hard links, APFS clones, and snapshots can share or retain data. Space is not
+freed by moving files to Trash until you empty it.
 
 ## Command line
 
-The same binary runs headless, which is handy for scripting:
+Homebrew also installs the `diskinsight` command:
 
 ```bash
 diskinsight --scan ~/Downloads --top=20
@@ -194,7 +131,8 @@ the terminal app launching the process.
 | `--verbose` | live progress while scanning |
 | `--cross-volumes` | follow mount points onto other volumes |
 | `--list-blocked` | list folders skipped for permissions |
-| `--probe-paths` | report which guarded locations deny access |
+| `--list-unreadable` | show up to 100 unexpected read failures with paths and causes |
+| `--probe-paths` | probe guarded locations; may trigger permission prompts |
 
 ## Keyboard shortcuts
 
@@ -209,9 +147,8 @@ the terminal app launching the process.
 
 ## Contributing and license
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for source layout, local development,
-smoke tests, and screenshot capture. Report bugs or suggest features in
-[GitHub issues](https://github.com/fvandillen/diskinsight/issues).
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
+Report bugs in [GitHub issues](https://github.com/fvandillen/diskinsight/issues).
 
 Copyright © 2026 Florian van Dillen. Released under the [MIT License](LICENSE).
-DiskInsight is an independent project, not affiliated with WinDirStat.
+Not affiliated with WinDirStat.

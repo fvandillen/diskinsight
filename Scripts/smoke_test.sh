@@ -17,9 +17,10 @@ dd if=/dev/zero of="$FIXTURE/external/not-followed.bin" bs=1024 count=16 2>/dev/
 ln -s "$FIXTURE/external" "$FIXTURE/data/link"
 
 "$BINARY" --help | grep -q -- '--scan'
-"$BINARY" --scan "$FIXTURE/data" --top=10 --png="$FIXTURE/treemap.png" > "$FIXTURE/scan.txt"
+"$BINARY" --scan "$FIXTURE/data" --top=10 --list-unreadable --png="$FIXTURE/treemap.png" > "$FIXTURE/scan.txt"
 cat "$FIXTURE/scan.txt"
-grep -q '3 files, 1 folders, 0 unreadable, 0 blocked' "$FIXTURE/scan.txt"
+grep -q '3 files, 1 folders, 0 unreadable, 0 blocked, 0 macOS-protected' "$FIXTURE/scan.txt"
+grep -q 'Read failures (showing 0 of 0)' "$FIXTURE/scan.txt"
 grep -q 'movie.mp4' "$FIXTURE/scan.txt"
 grep -q '\.pdf (1 files)' "$FIXTURE/scan.txt"
 if grep -q 'not-followed.bin' "$FIXTURE/scan.txt"; then

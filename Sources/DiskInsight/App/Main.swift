@@ -46,6 +46,7 @@ enum Main {
               --cross-volumes     follow mount points onto other volumes
               --verbose           live progress while scanning
               --list-blocked      list folders skipped for permissions
+              --list-unreadable   show a sample of read failures and their causes
               --probe-paths       report which guarded locations deny access
             """)
             return
@@ -93,7 +94,7 @@ enum HeadlessScan {
             let root = result.root
             print("Scanned \(root.path)")
             print(String(format: "  %@ on disk / %@ logical", Format.bytes(root.allocated), Format.bytes(root.size)))
-            print("  \(root.fileCount) files, \(root.folderCount) folders, \(result.errors) unreadable, \(result.blocked) blocked, \(Format.duration(result.duration))")
+            print("  \(root.fileCount) files, \(root.folderCount) folders, \(result.errors) unreadable, \(result.blocked) blocked, \(result.systemProtected) macOS-protected, \(Format.duration(result.duration))")
             print("")
             print("Largest entries:")
             for child in (root.children ?? []).prefix(limit) {
@@ -116,6 +117,15 @@ enum HeadlessScan {
                     print("  \(node.path)")
                 }
                 if found == 0 { print("  (none)") }
+            }
+
+            if CommandLine.arguments.contains("--list-unreadable") {
+                print("")
+                print("Read failures (showing \(result.unreadableSamples.count) of \(result.errors)):")
+                for issue in result.unreadableSamples {
+                    print("  \(issue.path): \(issue.message) (errno \(issue.errorCode))")
+                }
+                if result.errors == 0 { print("  (none)") }
             }
 
             if let treemapOutput {

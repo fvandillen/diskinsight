@@ -34,6 +34,10 @@ final class DiskScanner: @unchecked Sendable {
     private var bytes: Int64 = 0
     private var errors: Int64 = 0
     private var blocked: Int64 = 0
+    private var systemProtected: Int64 = 0
+    private var unreadableSamples: [ScanIssue] = []
+    private var rootReadError: Int32?
+    static let issueSampleLimit = 100
     private var currentPath: String = ""
 
     private var rootDev: Int32 = 0
@@ -73,6 +77,7 @@ final class DiskScanner: @unchecked Sendable {
         defer { cond.unlock() }
         return ScanProgress(files: files, folders: folders, bytes: bytes,
                             errors: errors, blocked: blocked,
+                            systemProtected: systemProtected,
                             currentPath: active.isEmpty ? currentPath : active,
                             finished: false)
     }
@@ -92,7 +97,7 @@ final class DiskScanner: @unchecked Sendable {
 
         var st = stat()
         guard lstat(path, &st) == 0 else {
-            throw ScanError.unreadableRoot(path)
+            throw ScanError.unreadableRoot(path, errno)
         }
         guard (st.st_mode & S_IFMT) == S_IFDIR else {
             throw ScanError.notADirectory(path)
@@ -123,6 +128,10 @@ final class DiskScanner: @unchecked Sendable {
         cond.unlock()
 
         if wasCancelled { throw ScanError.cancelled }
+        // A failed root is not a successful empty scan, even for a system path.
+        if let rootReadError {
+            throw ScanError.unreadableRoot(path, rootReadError)
+        }
 
         var interner = ExtensionInterner()
         Self.rollUp(root, interner: &interner)
@@ -136,6 +145,8 @@ final class DiskScanner: @unchecked Sendable {
                           duration: Date().timeIntervalSince(started),
                           errors: errors,
                           blocked: blocked,
+                          systemProtected: systemProtected,
+                          unreadableSamples: unreadableSamples,
                           volumeCapacity: space.capacity,
                           volumeFree: space.free)
     }
@@ -166,6 +177,10 @@ final class DiskScanner: @unchecked Sendable {
             bytes += harvest.bytes
             errors += harvest.errors
             blocked += harvest.blocked
+            systemProtected += harvest.systemProtected
+            if let errorCode = harvest.rootReadError { rootReadError = errorCode }
+            unreadableSamples.append(contentsOf: harvest.unreadableSamples.prefix(
+                Self.issueSampleLimit - unreadableSamples.count))
             if let sample = harvest.samplePath { currentPath = sample }
             for candidate in harvest.candidates where !cancelled {
                 if shouldDescendLocked(candidate) {
@@ -200,6 +215,9 @@ final class DiskScanner: @unchecked Sendable {
         var bytes: Int64 = 0
         var errors: Int64 = 0
         var blocked: Int64 = 0
+        var systemProtected: Int64 = 0
+        var unreadableSamples: [ScanIssue] = []
+        var rootReadError: Int32?
         var candidates: [Candidate] = []
         var samplePath: String?
     }
@@ -216,9 +234,11 @@ final class DiskScanner: @unchecked Sendable {
         pathLock.unlock()
 
         guard let handle = opendir(dirPath) else {
-            node.isUnreadable = true
+            let errorCode = errno
+            node.isSystemProtected = recordFailure(path: dirPath, errorCode: errorCode,
+                                                   isRoot: node.parent == nil, harvest: &harvest)
+            node.isUnreadable = !node.isSystemProtected
             node.children = []
-            harvest.errors = 1
             return harvest
         }
         defer { closedir(handle) }
@@ -227,7 +247,17 @@ final class DiskScanner: @unchecked Sendable {
         var children: [FileNode] = []
         let prefix = dirPath.hasSuffix("/") ? dirPath : dirPath + "/"
 
-        while let entry = readdir(handle) {
+        while true {
+            errno = 0
+            guard let entry = readdir(handle) else {
+                let errorCode = errno
+                if errorCode != 0 {
+                    node.isSystemProtected = recordFailure(path: dirPath, errorCode: errorCode,
+                                                           isRoot: node.parent == nil, harvest: &harvest)
+                    node.isUnreadable = !node.isSystemProtected
+                }
+                break
+            }
             let namePtr = UnsafeRawPointer(entry)
                 .advanced(by: Self.direntNameOffset)
                 .assumingMemoryBound(to: CChar.self)
@@ -239,7 +269,9 @@ final class DiskScanner: @unchecked Sendable {
 
             var st = stat()
             guard fstatat(descriptor, namePtr, &st, AT_SYMLINK_NOFOLLOW) == 0 else {
-                harvest.errors += 1
+                let errorCode = errno
+                recordFailure(path: prefix + String(cString: namePtr), errorCode: errorCode,
+                              harvest: &harvest)
                 continue
             }
 
@@ -254,6 +286,13 @@ final class DiskScanner: @unchecked Sendable {
 
             if isDirectory {
                 harvest.folders += 1
+
+                if ScanAccessPolicy.isDataVault(flags: st.st_flags) {
+                    child.children = []
+                    child.isSystemProtected = true
+                    harvest.systemProtected += 1
+                    continue
+                }
 
                 // Opening a TCC-guarded folder without Full Disk Access raises a
                 // consent prompt. Leave it closed and flag it in the UI instead.
@@ -293,6 +332,22 @@ final class DiskScanner: @unchecked Sendable {
 
         node.children = children
         return harvest
+    }
+
+    @discardableResult
+    private func recordFailure(path: String, errorCode: Int32, isRoot: Bool = false,
+                               harvest: inout Harvest) -> Bool {
+        if !isRoot, ScanAccessPolicy.isExpectedDenial(path: path, errorCode: errorCode,
+                                                    hasFullDiskAccess: options.hasFullDiskAccess) {
+            harvest.systemProtected += 1
+            return true
+        }
+        harvest.errors += 1
+        if isRoot { harvest.rootReadError = errorCode }
+        if harvest.unreadableSamples.count < Self.issueSampleLimit {
+            harvest.unreadableSamples.append(ScanIssue(path: path, errorCode: errorCode))
+        }
+        return false
     }
 
     /// Decides whether a directory should be walked. Pure table lookups, so it is
@@ -369,13 +424,14 @@ final class DiskScanner: @unchecked Sendable {
 
 enum ScanError: LocalizedError {
     case cancelled
-    case unreadableRoot(String)
+    case unreadableRoot(String, Int32)
     case notADirectory(String)
 
     var errorDescription: String? {
         switch self {
         case .cancelled: return "Scan cancelled."
-        case .unreadableRoot(let path): return "Can't read “\(path)”. Grant Full Disk Access and try again."
+        case .unreadableRoot(let path, let errorCode):
+            return "Can't read “\(path)”: \(String(cString: strerror(errorCode))). Choose a readable folder or check its permissions."
         case .notADirectory(let path): return "“\(path)” is not a folder."
         }
     }

@@ -15,6 +15,7 @@ Requirements: macOS 14 or later, Apple Silicon, and Xcode command line tools
 git clone https://github.com/fvandillen/diskinsight.git
 cd diskinsight
 swift build
+swift test
 ./Scripts/build_app.sh
 ./Scripts/smoke_test.sh
 open build/DiskInsight.app
@@ -26,6 +27,10 @@ Apple Silicon; Intel release binaries are not currently distributed.
 Keep changes focused, use existing SwiftUI/AppKit patterns, and document behavior
 changes. Exercise both GUI and headless mode when changing the scanner. Never
 test Trash operations against real user files.
+
+Scanner access tests use disposable synthetic files. They cover expected
+system-access denials, unexpected failures, warning copy, and bounded diagnostic
+samples. Permission-denial fixtures are skipped when tests run as root.
 
 ## Source layout
 

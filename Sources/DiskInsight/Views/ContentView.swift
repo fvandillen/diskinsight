@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var showsScanIssues = false
 
     var body: some View {
         Group {
@@ -45,8 +46,8 @@ struct ContentView: View {
                 progressBar
                 Divider()
             }
-            if (model.blockedCount > 0 || model.errorCount > 0) && !model.isScanning {
-                permissionBanner
+            if let warning = model.scanWarningText, !model.isScanning {
+                permissionBanner(text: warning)
                 Divider()
             }
 
@@ -134,17 +135,25 @@ struct ContentView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private var permissionBanner: some View {
+    private func permissionBanner(text: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "lock.shield")
                 .foregroundStyle(.orange)
-            Text(bannerText)
+            Text(text)
                 .font(.system(size: 11))
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
-            Button("Grant Full Disk Access…") {
-                model.beginGrantingFullDiskAccess()
+            if !model.unreadableSamples.isEmpty {
+                Button("Details…") { showsScanIssues = true }
+                    .controlSize(.small)
+                    .popover(isPresented: $showsScanIssues) { scanIssueDetails }
             }
-            .controlSize(.small)
+            if !model.hasFullDiskAccess {
+                Button("Grant Full Disk Access…") {
+                    model.beginGrantingFullDiskAccess()
+                }
+                .controlSize(.small)
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 5)
@@ -154,12 +163,30 @@ struct ContentView: View {
         }
     }
 
-    private var bannerText: String {
-        if model.blockedCount > 0 {
-            let folders = Format.count(model.blockedCount)
-            return "\(folders) protected \(model.blockedCount == 1 ? "folder was" : "folders were") skipped, so these totals are incomplete."
+    private var scanIssueDetails: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Items that couldn't be read")
+                .font(.headline)
+            Text("Showing \(Format.count(Int64(model.unreadableSamples.count))) of \(Format.count(model.errorCount)) failures. Known macOS-protected omissions are not included.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    ForEach(model.unreadableSamples) { issue in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(issue.path)
+                                .textSelection(.enabled)
+                            Text("\(issue.message) (errno \(issue.errorCode))")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .font(.system(size: 11))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
-        return "\(Format.count(model.errorCount)) items couldn't be read. Grant Full Disk Access for a complete picture."
+        .padding(16)
+        .frame(width: 540, height: 320)
     }
 
     private var statusBar: some View {
@@ -177,6 +204,11 @@ struct ContentView: View {
                     .help("Files")
                 Label("\(Format.count(Int64(root.folderCount)))", systemImage: "folder")
                     .help("Folders")
+            }
+            if model.systemProtectedCount > 0 {
+                Label("\(Format.count(model.systemProtectedCount)) macOS-protected", systemImage: "lock.shield")
+                    .foregroundStyle(.secondary)
+                    .help("Omitted from totals: macOS protects these items independently of Full Disk Access. No additional access is requested.")
             }
             if model.volumeCapacity > 0 {
                 Divider().frame(height: 12)

@@ -62,6 +62,8 @@ struct MountTable {
 /// `st_flags` bits that matter to us. `SF_FIRMLINK` is not surfaced by the
 /// Darwin overlay, so the raw values are declared here.
 enum FileFlags {
+    /// A Data Vault requires private entitlements even with Full Disk Access.
+    static let dataVault: UInt32 = 0x0000_0080
     /// Directory is a macOS firmlink (e.g. `/Users` -> the Data volume).
     static let firmlink: UInt32 = 0x0080_0000
     /// Contents live in the cloud; touching it would trigger a download.

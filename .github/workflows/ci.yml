@@ -18,6 +18,7 @@ jobs:
         run: ./Scripts/package_release.sh 1.0.0
       - name: Smoke test
         run: |
+          swift test
           swift build -c release
           ./Scripts/smoke_test.sh "$(swift build -c release --show-bin-path)/DiskInsight"
       - uses: actions/upload-artifact@v4

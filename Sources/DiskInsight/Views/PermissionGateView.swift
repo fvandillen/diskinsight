@@ -19,7 +19,7 @@ struct PermissionGateView: View {
                     Text("Give DiskInsight Full Disk Access")
                         .font(.system(size: 21, weight: .semibold))
 
-                    Text("macOS keeps folders like Desktop, Documents, Downloads and iCloud Drive private. Granting access once here means DiskInsight can measure your whole disk — and never has to interrupt a scan to ask again.")
+                    Text("macOS keeps folders like Desktop, Documents, Downloads and iCloud Drive private. Full Disk Access lets DiskInsight include more of your data without asking folder by folder. Some macOS-protected items remain inaccessible even with this permission.")
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
