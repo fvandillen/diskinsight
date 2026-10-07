@@ -62,13 +62,12 @@ user data without repeated folder prompts. With **Continue with limited access**
 guarded folders are skipped, shown as locked, and excluded from totals.
 
 Full Disk Access does not override every macOS protection or file permission.
-Data Vaults and known system-managed access denials do not trigger warnings;
-a neutral **macOS-protected** count records these omissions. Their contents
-remain excluded from totals. DiskInsight does not elevate privileges.
+Inaccessible items are marked inline in the directory tree, without a warning
+banner. A neutral **macOS-protected** count records Data Vaults and known
+system-managed access denials. Omitted contents remain excluded from totals;
+DiskInsight does not elevate privileges.
 
-Other unreadable items still trigger a warning. **Details…** shows up to 100
-affected paths and filesystem errors, also available with `--list-unreadable`.
-If Full Disk Access is already enabled, the warning does not ask for it again.
+Use `--list-unreadable` for up to 100 affected paths and filesystem errors.
 An unreadable scan root fails explicitly rather than showing an empty scan.
 
 ## Build and install

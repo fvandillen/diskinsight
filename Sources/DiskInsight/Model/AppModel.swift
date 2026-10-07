@@ -31,9 +31,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var lastScanDuration: TimeInterval = 0
     @Published private(set) var volumeCapacity: Int64 = 0
     @Published private(set) var volumeFree: Int64 = 0
-    @Published private(set) var errorCount: Int64 = 0
     @Published private(set) var systemProtectedCount: Int64 = 0
-    @Published private(set) var unreadableSamples: [ScanIssue] = []
 
     @Published private(set) var rows: [OutlineRow] = []
     @Published var expanded: Set<NodeID> = []
@@ -66,14 +64,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var hasFullDiskAccess = Permissions.hasFullDiskAccess()
     @Published private(set) var isAwaitingPermission = false
     @Published private(set) var didBypassPermissionGate = false
-    @Published private(set) var blockedCount: Int64 = 0
 
     /// The gate blocks the app until access is granted, or explicitly bypassed.
     var showsPermissionGate: Bool { !hasFullDiskAccess && !didBypassPermissionGate }
-
-    var scanWarningText: String? {
-        ScanWarning.message(errors: errorCount, blocked: blockedCount, hasFullDiskAccess: hasFullDiskAccess)
-    }
 
     // MARK: - Private state
 
@@ -128,10 +121,7 @@ final class AppModel: ObservableObject {
         treemapRoot = nil
         extensions = []
         progress = ScanProgress()
-        errorCount = 0
-        blockedCount = 0
         systemProtectedCount = 0
-        unreadableSamples = []
         errorText = nil
         isScanning = true
         statusMessage = "Scanning \(url.path)…"
@@ -192,10 +182,7 @@ final class AppModel: ObservableObject {
             lastScanDuration = result.duration
             volumeCapacity = result.volumeCapacity
             volumeFree = result.volumeFree
-            errorCount = result.errors
-            blockedCount = result.blocked
             systemProtectedCount = result.systemProtected
-            unreadableSamples = result.unreadableSamples
             expanded = [result.root.id]
             autoExpandLargest(from: result.root, budget: 2)
             rebuildRows()

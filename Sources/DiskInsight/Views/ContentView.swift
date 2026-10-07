@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var showsScanIssues = false
 
     var body: some View {
         Group {
@@ -46,11 +45,6 @@ struct ContentView: View {
                 progressBar
                 Divider()
             }
-            if let warning = model.scanWarningText, !model.isScanning {
-                permissionBanner(text: warning)
-                Divider()
-            }
-
             VSplitView {
                 HSplitView {
                     DirectoryOutlineView()
@@ -133,60 +127,6 @@ struct ContentView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(Color(nsColor: .windowBackgroundColor))
-    }
-
-    private func permissionBanner(text: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "lock.shield")
-                .foregroundStyle(.orange)
-            Text(text)
-                .font(.system(size: 11))
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer()
-            if !model.unreadableSamples.isEmpty {
-                Button("Details…") { showsScanIssues = true }
-                    .controlSize(.small)
-                    .popover(isPresented: $showsScanIssues) { scanIssueDetails }
-            }
-            if !model.hasFullDiskAccess {
-                Button("Grant Full Disk Access…") {
-                    model.beginGrantingFullDiskAccess()
-                }
-                .controlSize(.small)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 5)
-        .background {
-            Color(nsColor: .windowBackgroundColor)
-                .overlay(Color.orange.opacity(0.14))
-        }
-    }
-
-    private var scanIssueDetails: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Items that couldn't be read")
-                .font(.headline)
-            Text("Showing \(Format.count(Int64(model.unreadableSamples.count))) of \(Format.count(model.errorCount)) failures. Known macOS-protected omissions are not included.")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    ForEach(model.unreadableSamples) { issue in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(issue.path)
-                                .textSelection(.enabled)
-                            Text("\(issue.message) (errno \(issue.errorCode))")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .font(.system(size: 11))
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding(16)
-        .frame(width: 540, height: 320)
     }
 
     private var statusBar: some View {

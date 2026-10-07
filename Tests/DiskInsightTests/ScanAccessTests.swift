@@ -53,40 +53,6 @@ final class ScanAccessPolicyTests: XCTestCase {
     }
 }
 
-final class ScanWarningTests: XCTestCase {
-    func testExpectedOmissionsAloneDoNotProduceAWarning() {
-        XCTAssertNil(ScanWarning.message(errors: 0, blocked: 0, hasFullDiskAccess: true))
-        XCTAssertNil(ScanWarning.message(errors: 0, blocked: 0, hasFullDiskAccess: false))
-    }
-
-    func testWarningDoesNotRequestAnExistingGrant() throws {
-        let message = try XCTUnwrap(ScanWarning.message(errors: 1, blocked: 0, hasFullDiskAccess: true))
-        XCTAssertTrue(message.contains("1 item couldn't be read."))
-        XCTAssertTrue(message.contains("Full Disk Access is enabled"))
-        XCTAssertFalse(message.contains("Grant Full Disk Access"))
-        XCTAssertFalse(message.contains("complete picture"))
-    }
-
-    func testLimitedAccessWarningExplainsIncompleteTotalsWithoutPromisingFullAccess() throws {
-        let message = try XCTUnwrap(ScanWarning.message(errors: 0, blocked: 1, hasFullDiskAccess: false))
-        XCTAssertTrue(message.contains("1 protected folder was skipped."))
-        XCTAssertTrue(message.contains("Totals are incomplete"))
-        XCTAssertTrue(message.contains("may allow more items"))
-    }
-
-    func testMixedWarningReportsBothKindsOfFailure() throws {
-        let message = try XCTUnwrap(ScanWarning.message(errors: 3, blocked: 2, hasFullDiskAccess: false))
-        XCTAssertTrue(message.contains("2 protected folders were skipped."))
-        XCTAssertTrue(message.contains("3 items couldn't be read."))
-    }
-
-    func testGrantAfterLimitedScanStillExplainsThatResultsAreIncomplete() throws {
-        let message = try XCTUnwrap(ScanWarning.message(errors: 0, blocked: 1, hasFullDiskAccess: true))
-        XCTAssertTrue(message.contains("folder was skipped"))
-        XCTAssertTrue(message.contains("Full Disk Access is enabled"))
-    }
-}
-
 final class DiskScannerAccessTests: XCTestCase {
     private var fixture: URL!
     private var lockedDirectories: [URL] = []

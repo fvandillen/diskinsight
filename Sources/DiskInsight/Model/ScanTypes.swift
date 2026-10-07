@@ -86,25 +86,6 @@ struct ScanResult {
     var volumeFree: Int64
 }
 
-enum ScanWarning {
-    static func message(errors: Int64, blocked: Int64, hasFullDiskAccess: Bool) -> String? {
-        guard errors > 0 || blocked > 0 else { return nil }
-        var parts: [String] = []
-        if blocked > 0 {
-            parts.append("\(Format.count(blocked)) protected \(blocked == 1 ? "folder was" : "folders were") skipped.")
-        }
-        if errors > 0 {
-            parts.append("\(Format.count(errors)) \(errors == 1 ? "item" : "items") couldn't be read.")
-        }
-        if hasFullDiskAccess {
-            parts.append("Totals are incomplete. Full Disk Access is enabled; other permissions or filesystem errors may prevent access.")
-        } else {
-            parts.append("Totals are incomplete. Full Disk Access may allow more items to be read.")
-        }
-        return parts.joined(separator: " ")
-    }
-}
-
 enum SortKey: String, CaseIterable, Identifiable {
     case size
     case name

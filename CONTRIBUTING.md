@@ -29,7 +29,7 @@ changes. Exercise both GUI and headless mode when changing the scanner. Never
 test Trash operations against real user files.
 
 Scanner access tests use disposable synthetic files. They cover expected
-system-access denials, unexpected failures, warning copy, and bounded diagnostic
+system-access denials, unexpected failures, inline unreadable flags, and bounded diagnostic
 samples. Permission-denial fixtures are skipped when tests run as root.
 
 ## Source layout
